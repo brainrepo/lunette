@@ -46,6 +46,7 @@ fn try_acquire_lock() -> Option<fs::File> {
 
     let file = OpenOptions::new()
         .create(true)
+        .truncate(true)
         .write(true)
         .open(&path)
         .ok()?;

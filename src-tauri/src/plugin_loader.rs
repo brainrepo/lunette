@@ -200,7 +200,7 @@ impl PluginLoader {
 
 /// Restituisce il path della Plugin_Directory predefinita: `~/.lunette/plugins/`
 pub fn default_plugin_dir() -> Option<PathBuf> {
-    let home = std::env::var("HOME").ok().map(PathBuf::from).or_else(|| {
+    let home = std::env::var("HOME").ok().map(PathBuf::from).or({
         #[cfg(target_os = "windows")]
         {
             std::env::var("USERPROFILE").ok().map(PathBuf::from)
