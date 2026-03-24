@@ -34,6 +34,11 @@ jobs:
 
       - run: npm ci
 
+      # Build MCP server (Rust include_str! embeds dist/server.js at compile time)
+      - name: Build MCP server
+        working-directory: src/mcp
+        run: npm ci && npm run build
+
       # Frontend checks
       - name: TypeScript typecheck
         run: npx tsc --noEmit
