@@ -16,22 +16,36 @@ npm run tauri build
 sudo ln -sf "$(pwd)/src-tauri/target/release/lunette" /usr/local/bin/lunette
 ```
 
-### 2. Connect to Claude
+### 2. Install the skill and MCP server
 
-Add the MCP server to your Claude configuration:
+```bash
+lunette --install-skill
+```
+
+This installs two things:
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| **MCP server** | `~/.lunette/mcp/server.js` | Exposes the `visualize` tool that Claude calls |
+| **Claude Code skill** | `~/.claude/skills/lunette-visualize.md` | Teaches Claude *when* and *how* to use Lunette |
+
+### 3. Add the MCP config
+
+The installer prints the config snippet. Add it to your project's `.mcp.json` or `~/.claude.json` for global access:
 
 ```json
 {
   "mcpServers": {
     "lunette": {
+      "type": "stdio",
       "command": "node",
-      "args": ["/path/to/lunette/src/mcp/dist/index.js"]
+      "args": ["~/.lunette/mcp/server.js"]
     }
   }
 }
 ```
 
-### 3. Ask Claude to visualize
+### 4. Ask Claude to visualize
 
 ```
 You: "Draw a sequence diagram of the OAuth flow"
@@ -56,6 +70,16 @@ Claude ──▶ MCP Server ──▶ Lunette ──▶ Native Window
 ```
 
 The MCP server exposes a single `visualize` tool. Claude calls it with the content and an optional format hint. Lunette auto-detects the format and renders it in the appropriate viewer.
+
+## Skill vs MCP Server
+
+Lunette ships both a **skill** and an **MCP server** — they work together:
+
+- **The MCP server** (`~/.lunette/mcp/server.js`) is the tool itself. It exposes a `visualize` function that writes content to a temp file and opens it in Lunette via deep link. Any MCP-compatible client can call it.
+
+- **The skill** (`~/.claude/skills/lunette-visualize.md`) is Claude Code-specific. It teaches Claude *when* to use the tool (e.g. after generating a Mermaid diagram), *how* to format the content, and *when not to* (e.g. trivial one-liners). Without the skill, Claude can still call the tool, but may not use it proactively.
+
+Both are installed in one step with `lunette --install-skill`.
 
 ## What Claude Can Visualize
 
