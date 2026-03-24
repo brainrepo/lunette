@@ -1,6 +1,6 @@
 {
   "productName": "Lunette",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "identifier": "com.lunette.app",
   "build": {
     "frontendDist": "../dist",
@@ -14,7 +14,12 @@
         "title": "Lunette",
         "width": 1024,
         "height": 768,
-        "backgroundColor": [10, 12, 22, 255]
+        "backgroundColor": [
+          10,
+          12,
+          22,
+          255
+        ]
       }
     ],
     "security": {
@@ -35,7 +40,9 @@
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": ["lunette"]
+        "schemes": [
+          "lunette"
+        ]
       }
     }
   }
