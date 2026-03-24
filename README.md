@@ -2,7 +2,9 @@
 
 Give Claude eyes. Ask it to visualize anything — diagrams, documents, data, math — and it renders instantly in a native window on your desktop.
 
-[![Lunette Demo](docs/assets/lunette-thumb.png)](https://youtu.be/sH0zB-tt_NI)
+<p align="center">
+  <img src="logo.png" alt="Lunette" width="200">
+</p>
 
 Lunette is an **MCP server** that connects Claude (or any MCP-compatible assistant) to a **Tauri desktop viewer**. When Claude calls the `visualize` tool, Lunette opens a native window and renders the content. No copy-pasting, no browser tabs, no file juggling.
 
