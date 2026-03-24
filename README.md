@@ -1,121 +1,251 @@
 # Lunette
 
-A macOS desktop app that receives content via stdin pipe or `lunette://` deep link, auto-detects the format, and renders it in a native window.
+Give Claude eyes. Ask it to visualize anything — diagrams, documents, data, math — and it renders instantly in a native window on your desktop.
 
-## Supported formats
+<video src="docs/assets/lunette-demo.mp4" autoplay loop muted playsinline></video>
 
-- **Mermaid** — diagrams (`graph TD`, `sequenceDiagram`, etc.)
-- **Excalidraw** — JSON with `elements` + `appState` keys
-- **Markdown** — any UTF-8 text (catch-all)
-- **Plugins** — third-party JS renderers from `~/.lunette/plugins/`
+Lunette is an **MCP server** that connects Claude (or any MCP-compatible assistant) to a **Tauri desktop viewer**. When Claude calls the `visualize` tool, Lunette opens a native window and renders the content. No copy-pasting, no browser tabs, no file juggling.
 
-## Install
+## Quick Start
+
+### 1. Build the app
 
 ```bash
+npm install
 npm run tauri build
 sudo ln -sf "$(pwd)/src-tauri/target/release/lunette" /usr/local/bin/lunette
 ```
 
-Or copy the `.app` bundle:
+### 2. Connect to Claude
 
-```bash
-cp -r src-tauri/target/release/bundle/macos/Lunette.app /Applications/
+Add the MCP server to your Claude configuration:
+
+```json
+{
+  "mcpServers": {
+    "lunette": {
+      "command": "node",
+      "args": ["/path/to/lunette/src/mcp/dist/index.js"]
+    }
+  }
+}
 ```
 
-## Usage
+### 3. Ask Claude to visualize
 
-### Pipe
+```
+You: "Draw a sequence diagram of the OAuth flow"
+Claude: → renders a Mermaid diagram in Lunette
 
-```bash
-echo "graph TD\nA-->B" | lunette
-echo "# Hello" | lunette
-cat drawing.excalidraw | lunette
+You: "Show me the API response as JSON"
+Claude: → renders an interactive JSON tree in Lunette
+
+You: "Render the Schrödinger equation"
+Claude: → renders LaTeX math in Lunette
 ```
 
-### Deep link — inline data (base64)
+Claude will ask for your confirmation before opening Lunette, then the content appears instantly in a native window.
 
-```bash
-open "lunette://?data=$(echo 'graph TD\nA-->B' | base64)"
+## How It Works
+
+```
+Claude ──▶ MCP Server ──▶ Lunette ──▶ Native Window
+              │
+              ├── writes content to temp file
+              └── opens via lunette:// deep link
 ```
 
-### Deep link — compressed (base64 + zlib)
+The MCP server exposes a single `visualize` tool. Claude calls it with the content and an optional format hint. Lunette auto-detects the format and renders it in the appropriate viewer.
+
+## What Claude Can Visualize
+
+| Format | What Claude generates | What you see |
+|--------|----------------------|--------------|
+| **Mermaid** | `graph TD; A-->B` | Flowcharts, sequence diagrams, Gantt charts, mind maps |
+| **Markdown** | `# Title\n**bold** text` | Styled documentation with syntax-highlighted code |
+| **JSON** | `{"key": "value"}` | Interactive tree with expand/collapse |
+| **LaTeX** | `$$E = mc^2$$` | Beautifully rendered math equations |
+| **Excalidraw** | `{"elements": [...], "appState": {...}}` | Hand-drawn style sketches and whiteboards |
+
+## Use Cases
+
+- **Brainstorming** — Ask Claude to map out ideas as diagrams, refine them iteratively
+- **Architecture** — Have Claude generate system diagrams from descriptions or code
+- **Data exploration** — Pipe API responses through Claude, see them as structured JSON trees
+- **Documentation** — Preview markdown output before committing
+- **Math / Research** — Render equations and formulas as you discuss them
+
+## Also Works from the Terminal
+
+Lunette is not limited to Claude. Pipe any command's output directly:
 
 ```bash
+# Diagrams
+echo "graph TD; A[Start] --> B[End]" | lunette
+cat architecture.mmd | lunette
+
+# Documentation
+cat README.md | lunette
+
+# Data
+curl -s https://api.example.com/data | lunette
+
+# Math
+echo '$$E = mc^2$$' | lunette
+```
+
+### Deep Links
+
+Open content from scripts, browsers, or automation:
+
+```bash
+# Base64
+open "lunette://?data=$(echo '# Hello' | base64)"
+
+# Compressed (zlib + base64)
 DATA=$(python3 -c "
-import zlib, base64, sys
+import zlib, base64
 raw = b'graph TD\nA-->B'
 print(base64.b64encode(zlib.compress(raw)).decode())
 ")
 open "lunette://?data=$DATA"
+
+# Temp file
+echo "# Report" > /tmp/report.md
+open "lunette://?file=/tmp/report.md"
 ```
 
-### Deep link — temp file
+### Single Instance
+
+Lunette runs as a single instance. New content updates the existing window:
 
 ```bash
-echo "# Hello from file" > /tmp/lunette_test.txt
-open "lunette://?file=/tmp/lunette_test.txt"
+echo "graph TD; A-->B" | lunette   # Opens Lunette
+echo "# New content" | lunette      # Updates the same window
 ```
 
 ---
 
-## Manual tests
+## Architecture
 
-### Mermaid
-
-```bash
-echo "graph TD\n  A[Start] --> B[End]" | lunette
 ```
-Expected: flowchart renders in the window.
-
-```bash
-open "lunette://?data=$(printf 'sequenceDiagram\nAlice->>Bob: Hi' | base64)"
+┌─────────────────────────────────────────────┐
+│  Entry Points                               │
+│  ┌────────────┐  ┌────────┐  ┌───────────┐ │
+│  │ MCP Server │  │  Pipe  │  │ Deep Link │ │
+│  └─────┬──────┘  └───┬────┘  └─────┬─────┘ │
+│        └─────────────┼──────────────┘       │
+│                      ▼                       │
+│           ┌─────────────────┐               │
+│           │Content Detector │  Rust         │
+│           └────────┬────────┘               │
+│                    ▼                         │
+│           ┌─────────────────┐               │
+│           │   Tauri IPC     │               │
+│           └────────┬────────┘               │
+│                    ▼                         │
+│  ┌──────────────────────────────────┐       │
+│  │  Frontend (React)                │       │
+│  │  ViewerRouter → Lazy Viewer      │       │
+│  │  ┌─────────┬──────────┬────────┐ │       │
+│  │  │ Mermaid │ Markdown │  JSON  │ │       │
+│  │  ├─────────┼──────────┼────────┤ │       │
+│  │  │  LaTeX  │Excalidraw│ Plugin │ │       │
+│  │  └─────────┴──────────┴────────┘ │       │
+│  └──────────────────────────────────┘       │
+└─────────────────────────────────────────────┘
 ```
-Expected: sequence diagram renders.
 
-### Excalidraw
+### Backend (Rust / Tauri)
+
+- **`content_detector.rs`** — Heuristic chain: Plugin → Mermaid → Excalidraw → JSON → LaTeX → Markdown → Unrecognized
+- **`pipe_handler.rs`** — Reads stdin, handles base64 decoding
+- **`deep_link_handler.rs`** — Parses `lunette://` URLs (base64, zlib, temp file)
+- **`ipc.rs`** — Single-instance enforcement via Unix socket / Windows named pipe
+- **`plugin_loader.rs`** — Loads JS plugins from `~/.lunette/plugins/`
+
+### Frontend (React / TypeScript)
+
+- **`ViewerRouter.tsx`** — Listens to Tauri events, dispatches to lazy-loaded viewers
+- **`MermaidViewer.tsx`** — Renders via the Mermaid library
+- **`MarkdownViewer.tsx`** — Renders via Marked + highlight.js
+- **`JsonViewer.tsx`** — Interactive tree via @uiw/react-json-view
+- **`LatexViewer.tsx`** — Math rendering via KaTeX
+- **`ExcalidrawViewer.tsx`** — Full Excalidraw canvas
+- **`PluginViewer.tsx`** — Sandboxed iframe for third-party renderers
+
+### MCP Server (Node.js)
+
+- **`src/mcp/src/index.ts`** — Exposes the `visualize` tool, writes content to a temp file, opens Lunette via deep link
+
+## Development
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 20+
+- [Rust](https://rustup.rs/) stable
+- Tauri v2 system dependencies ([platform guide](https://v2.tauri.app/start/prerequisites/))
+
+### Setup
 
 ```bash
-echo '{"elements":[],"appState":{"viewBackgroundColor":"#ffffff"}}' | lunette
+npm install
+npm run tauri dev
 ```
-Expected: empty Excalidraw canvas renders.
 
-### Markdown
-
-```bash
-printf '# Title\n\n- item 1\n- item 2\n\n```js\nconsole.log("hi")\n```' | lunette
-```
-Expected: styled markdown with syntax-highlighted code block.
-
-### Deep link (base64)
+### Testing
 
 ```bash
-open "lunette://?data=$(printf '## Deep link test\nThis came from a URL.' | base64)"
-```
-Expected: markdown renders with the heading and paragraph.
-
-### Single-instance forwarding
-
-```bash
-# With Lunette already open:
-echo "graph LR\n  X-->Y" | lunette
-```
-Expected: the existing window updates — no second window opens.
-
-### Unknown format
-
-```bash
-echo "" | lunette
-```
-Expected: error screen "Formato non riconoscibile".
-
----
-
-## Run tests
-
-```bash
-# Frontend unit tests
+# Frontend (Vitest)
 npm test
 
-# Rust unit + property-based tests
+# Backend (Cargo)
 cargo test --manifest-path src-tauri/Cargo.toml
+
+# TypeScript typecheck
+npx tsc --noEmit
+
+# Manual test suite (interactive)
+./test.sh
 ```
+
+### Project Structure
+
+```
+lunette/
+├── src/                    # React frontend
+│   ├── components/         # Viewer components
+│   ├── mcp/                # MCP server (Node.js)
+│   └── theme.ts            # Design tokens
+├── src-tauri/              # Rust backend
+│   └── src/
+│       ├── content_detector.rs
+│       ├── pipe_handler.rs
+│       ├── deep_link_handler.rs
+│       ├── ipc.rs
+│       └── lib.rs          # App setup + pipeline
+├── fixtures/               # Test data
+├── docs/
+│   ├── assets/             # README images
+│   └── videos/             # Remotion demo video project
+└── .github/workflows/      # CI + Release pipelines
+```
+
+## CI/CD
+
+### CI (every push / PR)
+
+Runs on Ubuntu: TypeScript typecheck → frontend build → Vitest → Cargo test → Clippy.
+
+### Release
+
+Triggered manually via GitHub Actions:
+
+1. **Actions → Release → Run workflow** → enter version (e.g. `0.2.0`)
+2. Pipeline bumps the version in all manifests, tags, and builds for all platforms
+3. Artifacts (`.dmg`, `.msi`, `.deb`, `.AppImage`) uploaded to a **draft GitHub Release**
+4. Review and publish
+
+## License
+
+MIT

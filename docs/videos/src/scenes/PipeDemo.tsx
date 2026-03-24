@@ -83,7 +83,7 @@ export const PipeDemo: React.FC = () => {
           letterSpacing: "-0.01em",
         }}
       >
-        Just pipe it
+        Also works from the terminal
       </div>
 
       {/* Terminal window */}

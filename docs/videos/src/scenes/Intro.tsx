@@ -115,7 +115,7 @@ export const Intro: React.FC = () => {
             letterSpacing: "0.04em",
           }}
         >
-          Pipe anything. See it instantly.
+          Give Claude eyes.
         </div>
       </div>
     </AbsoluteFill>

@@ -1,54 +1,16 @@
 import React, { useState } from "react";
 import { Excalidraw, exportToBlob } from "@excalidraw/excalidraw";
-import type { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types";
-import type { AppState } from "@excalidraw/excalidraw/types/types";
 import {
   baseContainer, gradientOverlay, toolbar, toolbarButton, toolbarButtonActive,
   card,
   CYAN, PINK, WHITE_60, WHITE_35, WHITE_10,
   FONT_MONO,
 } from "../theme";
+import { parseExcalidrawContent } from "../utils/parseExcalidrawContent";
+import type { ParsedData, ParseError } from "../utils/parseExcalidrawContent";
 
 interface ExcalidrawViewerProps {
   content: string;
-}
-
-interface ParsedData {
-  elements: readonly ExcalidrawElement[];
-  appState: Partial<AppState>;
-}
-
-interface ParseError {
-  message: string;
-}
-
-function parseExcalidrawContent(content: string): ParsedData | ParseError {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(content);
-  } catch (err) {
-    return {
-      message: `JSON non valido: ${err instanceof Error ? err.message : String(err)}`,
-    };
-  }
-
-  if (typeof parsed !== "object" || parsed === null) {
-    return { message: "Il contenuto non è un oggetto JSON valido." };
-  }
-
-  const obj = parsed as Record<string, unknown>;
-
-  if (!("elements" in obj)) {
-    return { message: "Campo mancante: 'elements'" };
-  }
-  if (!("appState" in obj)) {
-    return { message: "Campo mancante: 'appState'" };
-  }
-
-  return {
-    elements: obj.elements as readonly ExcalidrawElement[],
-    appState: obj.appState as Partial<AppState>,
-  };
 }
 
 function ExcalidrawViewer({ content }: ExcalidrawViewerProps): React.JSX.Element {

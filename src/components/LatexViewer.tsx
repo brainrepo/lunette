@@ -18,7 +18,7 @@ type Segment =
   | { type: "text"; value: string };
 
 /** Split raw LaTeX/text content into typed segments. */
-function parseSegments(raw: string): Segment[] {
+export function parseSegments(raw: string): Segment[] {
   // Strip \documentclass preamble — keep only \begin{document}...\end{document}
   const docMatch = raw.match(/\\begin\{document\}([\s\S]*?)\\end\{document\}/);
   const content = docMatch ? docMatch[1] : raw;

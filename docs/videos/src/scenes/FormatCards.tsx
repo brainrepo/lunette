@@ -49,8 +49,8 @@ const FormatCard: React.FC<{
       style={{
         opacity,
         transform: `translateY(${y}px) scale(${scale})`,
-        width: 320,
-        padding: "28px 24px",
+        width: 360,
+        padding: "30px 28px",
         backgroundColor: `${format.color}08`,
         border: `1.5px solid ${format.color}25`,
         borderRadius: 16,
@@ -63,14 +63,14 @@ const FormatCard: React.FC<{
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <div
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 10,
+            width: 54,
+            height: 54,
+            borderRadius: 12,
             backgroundColor: `${format.color}18`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 22,
+            fontSize: 28,
             fontFamily: mono,
             color: format.color,
           }}
@@ -81,7 +81,7 @@ const FormatCard: React.FC<{
           <div
             style={{
               fontFamily: inter,
-              fontSize: 22,
+              fontSize: 28,
               fontWeight: 700,
               color: WHITE_90,
             }}
@@ -91,7 +91,7 @@ const FormatCard: React.FC<{
           <div
             style={{
               fontFamily: inter,
-              fontSize: 15,
+              fontSize: 19,
               color: WHITE_60,
               marginTop: 2,
             }}
@@ -105,7 +105,7 @@ const FormatCard: React.FC<{
       <div
         style={{
           fontFamily: mono,
-          fontSize: 13,
+          fontSize: 16,
           color: format.color,
           backgroundColor: "rgba(255,255,255,0.03)",
           border: `1px solid ${WHITE_10}`,
