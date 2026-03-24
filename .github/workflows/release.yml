@@ -1,0 +1,118 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 0.2.0, without the v prefix)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Step 1: bump version in all three manifest files, commit, tag ──
+  bump:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Bump version
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          # package.json
+          jq --arg v "$RELEASE_VERSION" '.version = $v' package.json > tmp.json && mv tmp.json package.json
+
+          # tauri.conf.json
+          jq --arg v "$RELEASE_VERSION" '.version = $v' src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
+
+          # Cargo.toml — only the [package] version at the top
+          sed -i "0,/^version = \".*\"/s//version = \"$RELEASE_VERSION\"/" src-tauri/Cargo.toml
+
+          # Sync Cargo.lock
+          cd src-tauri && cargo update --workspace && cd ..
+
+      - name: Commit and tag
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+          git commit -m "release: v${RELEASE_VERSION}"
+          git tag "v${RELEASE_VERSION}"
+          git push origin main --tags
+
+  # ── Step 2: build for each platform and upload to GitHub Release ────
+  build:
+    needs: bump
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+            rust_targets: aarch64-apple-darwin
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+            rust_targets: x86_64-apple-darwin
+          - platform: ubuntu-22.04
+            args: ""
+            rust_targets: ""
+          - platform: windows-latest
+            args: ""
+            rust_targets: ""
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ inputs.version }}
+
+      - name: Install system dependencies (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      - name: Build and upload
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v${{ inputs.version }}
+          releaseName: "Lunette v${{ inputs.version }}"
+          releaseBody: |
+            ## Lunette v${{ inputs.version }}
+
+            Download the installer for your platform below.
+
+            | Platform | File |
+            |----------|------|
+            | macOS (Apple Silicon) | `.dmg` (aarch64) |
+            | macOS (Intel) | `.dmg` (x86_64) |
+            | Windows | `.msi` / `.exe` |
+            | Linux | `.deb` / `.AppImage` |
+          releaseDraft: true
+          args: ${{ matrix.args }}

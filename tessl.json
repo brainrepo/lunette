@@ -1,0 +1,20 @@
+{
+  "name": "project",
+  "dependencies": {
+    "tessl/npm-tauri-apps--api": {
+      "version": "2.8.0"
+    },
+    "tessl/npm-highlight-js": {
+      "version": "11.11.0"
+    },
+    "tessl/npm-marked": {
+      "version": "17.0.0"
+    },
+    "tessl/npm-react-dom": {
+      "version": "18.3.0"
+    },
+    "tessl/npm-react": {
+      "version": "18.3.0"
+    }
+  }
+}

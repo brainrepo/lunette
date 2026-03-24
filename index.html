@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/src-tauri/icons/32x32.png" />
+    <title>Lunette</title>
+    <style>
+      html, body, #root {
+        margin: 0;
+        padding: 0;
+        background: rgb(10, 12, 22);
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* Custom scrollbar for dark theme (WebKit / Tauri WKWebView) */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+      ::-webkit-scrollbar-corner {
+        background: transparent;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "lunette-demo-video",
+  "private": true,
+  "scripts": {
+    "preview": "remotion studio src/Root.tsx",
+    "render": "remotion render src/Root.tsx LunetteDemo out/lunette-demo.mp4"
+  },
+  "dependencies": {
+    "remotion": "^4",
+    "@remotion/cli": "^4",
+    "@remotion/transitions": "^4",
+    "@remotion/google-fonts": "^4",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5"
+  }
+}

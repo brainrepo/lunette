@@ -1,0 +1,10 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for Lunette",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:event:default",
+    "deep-link:default"
+  ]
+}

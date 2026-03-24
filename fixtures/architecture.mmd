@@ -1,0 +1,93 @@
+flowchart TB
+  subgraph Client["Client Layer"]
+    direction LR
+    Browser["Browser\nReact SPA"]
+    Mobile["Mobile App\nReact Native"]
+    CLI["CLI Tool\nNode.js"]
+  end
+
+  subgraph Gateway["API Gateway"]
+    direction LR
+    NGINX["NGINX\nReverse Proxy\nRate Limiting"]
+    Auth["Auth Service\nJWT + OAuth 2.0\nPKCE Flow"]
+    CORS["CORS\nMiddleware"]
+  end
+
+  subgraph Services["Microservices"]
+    direction TB
+    subgraph Core["Core Domain"]
+      UserSvc["User Service\nFastify + TypeScript\nPort 3001"]
+      OrderSvc["Order Service\nFastify + TypeScript\nPort 3002"]
+      CatalogSvc["Catalog Service\nFastify + TypeScript\nPort 3003"]
+      PaymentSvc["Payment Service\nFastify + TypeScript\nPort 3004"]
+    end
+
+    subgraph Support["Support Services"]
+      NotifSvc["Notification Service\nEmails + Push + SMS"]
+      SearchSvc["Search Service\nElasticsearch\nFull-text + Facets"]
+      MediaSvc["Media Service\nImage Processing\nCDN Upload"]
+      AnalyticsSvc["Analytics Service\nEvent Ingestion\nClickhouse"]
+    end
+  end
+
+  subgraph Data["Data Layer"]
+    direction LR
+    PG[("PostgreSQL 16\nPrimary Database\nPgBouncer Pool")]
+    Redis[("Redis Cluster\nSession Cache\nRate Limiting")]
+    S3[("S3 / MinIO\nMedia Storage\nPresigned URLs")]
+    ES[("Elasticsearch 8\nSearch Index\nVector Search")]
+    CH[("ClickHouse\nAnalytics OLAP\nTimeseries")]
+  end
+
+  subgraph Infra["Infrastructure"]
+    direction LR
+    K8s["Kubernetes\nEKS Cluster\nHelm Charts"]
+    Kafka["Kafka\nEvent Streaming\n12 Partitions"]
+    Prometheus["Prometheus\nMetrics Collection"]
+    Grafana["Grafana\nDashboards\nAlerting"]
+    Jaeger["Jaeger\nDistributed Tracing"]
+  end
+
+  Browser --> NGINX
+  Mobile --> NGINX
+  CLI --> NGINX
+  NGINX --> Auth
+  Auth --> CORS
+  CORS --> UserSvc
+  CORS --> OrderSvc
+  CORS --> CatalogSvc
+  CORS --> PaymentSvc
+
+  UserSvc --> PG
+  UserSvc --> Redis
+  OrderSvc --> PG
+  OrderSvc --> Kafka
+  CatalogSvc --> PG
+  CatalogSvc --> ES
+  PaymentSvc --> PG
+  PaymentSvc --> Redis
+
+  Kafka --> NotifSvc
+  Kafka --> AnalyticsSvc
+  SearchSvc --> ES
+  MediaSvc --> S3
+  AnalyticsSvc --> CH
+
+  NotifSvc --> Redis
+
+  K8s -.-> Services
+  Prometheus -.-> Services
+  Grafana -.-> Prometheus
+  Jaeger -.-> Services
+
+  classDef client fill:#38b6f015,stroke:#38b6f060,color:#e2e8f0
+  classDef gateway fill:#d2407815,stroke:#d2407860,color:#e2e8f0
+  classDef service fill:#8050c015,stroke:#8050c060,color:#e2e8f0
+  classDef data fill:#40b87015,stroke:#40b87060,color:#e2e8f0
+  classDef infra fill:#4070c015,stroke:#4070c060,color:#e2e8f0
+
+  class Browser,Mobile,CLI client
+  class NGINX,Auth,CORS gateway
+  class UserSvc,OrderSvc,CatalogSvc,PaymentSvc,NotifSvc,SearchSvc,MediaSvc,AnalyticsSvc service
+  class PG,Redis,S3,ES,CH data
+  class K8s,Kafka,Prometheus,Grafana,Jaeger infra

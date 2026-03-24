@@ -1,0 +1,43 @@
+{
+  "name": "lunette",
+  "version": "0.1.0",
+  "description": "Lunette desktop viewer",
+  "keywords": ["desktop", "viewer", "mermaid", "excalidraw", "markdown", "json"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/lunette"
+  },
+  "scripts": {
+    "build": "tsc && vite build",
+    "dev": "vite",
+    "test": "./test.sh"
+  },
+  "dependencies": {
+    "@excalidraw/excalidraw": "^0.17.0",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@tauri-apps/api": "^2.0.0",
+    "highlight.js": "^11.0.0",
+    "marked": "^13.0.0",
+    "mermaid": "^11.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "typescript": "^5.5.0",
+    "vite": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "config": {
+    "features": {
+      "viewer": ["mermaid", "excalidraw", "markdown", "json"],
+      "search": true,
+      "export": ["png"]
+    }
+  }
+}

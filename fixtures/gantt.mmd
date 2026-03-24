@@ -1,0 +1,46 @@
+gantt
+  title Piano di Rilascio Q2 2026 — Piattaforma E-commerce
+  dateFormat YYYY-MM-DD
+  axisFormat %d %b
+  todayMarker stroke-width:3px,stroke:#38b6f0
+
+  section Discovery & Design
+    Raccolta requisiti stakeholder     :done, req, 2026-04-01, 10d
+    User research + interviste         :done, research, 2026-04-03, 8d
+    Wireframe checkout v2              :done, wire, 2026-04-10, 7d
+    Design system aggiornamento        :done, ds, 2026-04-14, 5d
+    Prototipo interattivo Figma        :done, proto, 2026-04-17, 6d
+    Review design con team             :done, review, 2026-04-23, 2d
+
+  section Backend — Servizio Ordini
+    Migrazione schema DB v16           :active, dbmig, 2026-04-25, 8d
+    API ordini v3 (breaking changes)   :active, apiv3, 2026-04-28, 12d
+    Integrazione Stripe Payment Intents :stripe, 2026-05-05, 10d
+    Saga pattern per checkout          :saga, 2026-05-08, 14d
+    Test di carico (k6 + Grafana)      :loadtest, 2026-05-20, 5d
+
+  section Backend — Event Streaming
+    Setup Kafka cluster produzione     :kafka, 2026-05-01, 7d
+    Schema Registry + Avro schemas     :schemas, 2026-05-05, 5d
+    Consumer ordini → ClickHouse       :consumer, 2026-05-08, 10d
+    DLQ + retry policy                 :dlq, 2026-05-15, 6d
+    Monitoring + alerting Kafka        :kafkamon, 2026-05-19, 4d
+
+  section Frontend
+    Checkout v2 — step address         :fe1, 2026-05-01, 7d
+    Checkout v2 — step payment         :fe2, 2026-05-08, 8d
+    Checkout v2 — step review+confirm  :fe3, 2026-05-14, 6d
+    Pagina tracking ordine real-time   :fetrack, 2026-05-18, 7d
+    Responsive + a11y audit            :a11y, 2026-05-23, 5d
+
+  section QA & Release
+    Integration testing end-to-end     :crit, e2e, 2026-05-26, 8d
+    Performance testing + tuning       :crit, perf, 2026-06-02, 5d
+    Canary deploy (5% traffico)        :canary, 2026-06-05, 3d
+    Gradual rollout 25% → 50% → 100%  :crit, rollout, 2026-06-08, 7d
+    Post-launch monitoring             :monitor, 2026-06-08, 14d
+
+  section Documentazione
+    API docs (OpenAPI 3.1)             :docs, 2026-05-20, 6d
+    Runbook operativo                  :runbook, 2026-05-25, 4d
+    Onboarding guide nuovi dev         :onboard, 2026-06-01, 5d

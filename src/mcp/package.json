@@ -1,0 +1,18 @@
+{
+  "name": "lunette-mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12",
+    "zod": "^3"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "esbuild": "^0.25",
+    "typescript": "^5"
+  }
+}

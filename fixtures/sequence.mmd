@@ -1,0 +1,83 @@
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant FE as Frontend<br/>React SPA
+  participant GW as API Gateway<br/>NGINX
+  participant AS as Auth Service<br/>JWT + PKCE
+  participant US as User Service
+  participant OS as Order Service
+  participant PS as Payment Service<br/>Stripe
+  participant K as Kafka<br/>Event Bus
+  participant NS as Notification Svc
+  participant DB as PostgreSQL
+
+  Note over U,DB: Checkout Flow — Happy Path
+
+  U->>FE: Click "Conferma Ordine"
+  activate FE
+  FE->>FE: Validate cart locally
+  FE->>GW: POST /api/orders {items, address, paymentMethod}
+  activate GW
+  GW->>AS: Verify JWT token
+  activate AS
+  AS->>AS: Decode + check expiry
+  AS-->>GW: 200 OK {userId: "u_abc123"}
+  deactivate AS
+
+  GW->>OS: POST /orders (authenticated)
+  activate OS
+  OS->>DB: BEGIN TRANSACTION
+  activate DB
+  OS->>DB: INSERT orders (status=pending)
+  OS->>DB: INSERT order_items (qty, price snapshot)
+  OS->>DB: UPDATE inventory (reserve stock)
+  DB-->>OS: OK — orderId: "ord_789"
+  deactivate DB
+
+  OS->>PS: POST /payments/charge {orderId, amount: €127.50, method}
+  activate PS
+  PS->>PS: Stripe API call
+  Note right of PS: 3D Secure may trigger<br/>additional auth step
+  PS-->>OS: 200 {paymentId: "pay_xyz", status: "succeeded"}
+  deactivate PS
+
+  OS->>DB: UPDATE orders SET status='paid', payment_id='pay_xyz'
+  activate DB
+  DB-->>OS: OK
+  deactivate DB
+
+  OS->>K: Publish OrderPaid {orderId, userId, items, amount}
+  activate K
+  K-->>OS: ACK (partition 3, offset 48291)
+  deactivate K
+  OS-->>GW: 201 Created {orderId: "ord_789", status: "paid"}
+  deactivate OS
+  GW-->>FE: 201 Created
+  deactivate GW
+  FE-->>U: Redirect to /orders/ord_789 (confirmation page)
+  deactivate FE
+
+  Note over K,NS: Async event processing
+
+  K->>NS: Consume OrderPaid event
+  activate NS
+  NS->>NS: Render email template
+  NS->>NS: Send email via SES
+  NS->>NS: Send push notification via FCM
+  NS-->>K: Commit offset
+  deactivate NS
+
+  Note over U,DB: Error Path — Payment Failure
+
+  rect rgb(80, 20, 40)
+    U->>FE: Click "Conferma Ordine" (insufficient funds)
+    FE->>GW: POST /api/orders {items, address}
+    GW->>OS: POST /orders
+    OS->>PS: POST /payments/charge
+    PS-->>OS: 402 {error: "card_declined", decline_code: "insufficient_funds"}
+    OS->>DB: UPDATE orders SET status='payment_failed'
+    OS->>K: Publish OrderPaymentFailed {orderId, reason}
+    OS-->>GW: 402 Payment Required {error: "Pagamento rifiutato"}
+    GW-->>FE: 402
+    FE-->>U: Show error toast + retry option
+  end
