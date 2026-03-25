@@ -4,15 +4,20 @@ use base64::{engine::general_purpose::STANDARD, Engine};
 
 use crate::LunetteError;
 
+/// Maximum payload size accepted from stdin (50 MB).
+const MAX_STDIN_BYTES: u64 = 50 * 1024 * 1024;
+
 pub struct PipeHandler;
 
 impl PipeHandler {
-    /// Legge stdin fino a EOF, restituisce il payload decodificato.
-    /// - Se vuoto/solo whitespace → `EmptyInput`
-    /// - Tenta decodifica Base64; se fallisce usa testo as-is
+    /// Reads stdin until EOF and returns the decoded payload.
+    /// - If empty/whitespace-only → `EmptyInput`
+    /// - Attempts Base64 decode; falls back to raw text
+    /// - Rejects payloads larger than 50 MB
     pub fn read() -> Result<String, LunetteError> {
         let mut buf = Vec::new();
         io::stdin()
+            .take(MAX_STDIN_BYTES)
             .read_to_end(&mut buf)
             .map_err(|e| LunetteError::Base64DecodeError(e.to_string()))?;
 

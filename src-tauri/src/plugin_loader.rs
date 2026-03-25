@@ -76,8 +76,8 @@ impl Clone for PluginRegistry {
 pub struct PluginLoader;
 
 impl PluginLoader {
-    /// Scansiona Plugin_Directory e restituisce il Plugin_Registry.
-    /// Se la directory non esiste, restituisce un registry vuoto senza errori.
+    /// Scans Plugin_Directory and returns the Plugin_Registry.
+    /// If the directory does not exist, returns an empty registry without errors.
     pub fn load(plugin_dir: &Path) -> PluginRegistry {
         if !plugin_dir.exists() {
             return PluginRegistry::new(vec![]);
@@ -86,7 +86,7 @@ impl PluginLoader {
         let entries = match std::fs::read_dir(plugin_dir) {
             Ok(e) => e,
             Err(err) => {
-                warn!("Impossibile leggere Plugin_Directory {:?}: {}", plugin_dir, err);
+                warn!("Unable to read Plugin_Directory {:?}: {}", plugin_dir, err);
                 return PluginRegistry::new(vec![]);
             }
         };
@@ -102,21 +102,21 @@ impl PluginLoader {
             let folder_name = match path.file_name().and_then(|n| n.to_str()) {
                 Some(n) => n.to_string(),
                 None => {
-                    warn!("Cartella plugin con nome non valido: {:?}", path);
+                    warn!("Plugin folder with invalid name: {:?}", path);
                     continue;
                 }
             };
 
             let manifest_path = path.join("package.json");
             if !manifest_path.exists() {
-                warn!("Plugin '{}': package.json non trovato, cartella ignorata", folder_name);
+                warn!("Plugin '{}': package.json not found, folder skipped", folder_name);
                 continue;
             }
 
             let content = match std::fs::read_to_string(&manifest_path) {
                 Ok(c) => c,
                 Err(err) => {
-                    warn!("Plugin '{}': impossibile leggere package.json: {}", folder_name, err);
+                    warn!("Plugin '{}': unable to read package.json: {}", folder_name, err);
                     continue;
                 }
             };
@@ -124,7 +124,7 @@ impl PluginLoader {
             let pkg: PackageJson = match serde_json::from_str(&content) {
                 Ok(p) => p,
                 Err(err) => {
-                    warn!("Plugin '{}': package.json non valido: {}", folder_name, err);
+                    warn!("Plugin '{}': invalid package.json: {}", folder_name, err);
                     continue;
                 }
             };
@@ -132,14 +132,14 @@ impl PluginLoader {
             let manifest = match pkg.lunette {
                 Some(m) => m,
                 None => {
-                    warn!("Plugin '{}': campo 'lunette' assente in package.json", folder_name);
+                    warn!("Plugin '{}': missing 'lunette' field in package.json", folder_name);
                     continue;
                 }
             };
 
             // Validate displayName
             if manifest.display_name.is_empty() {
-                warn!("Plugin '{}': campo 'displayName' è vuoto", folder_name);
+                warn!("Plugin '{}': 'displayName' field is empty", folder_name);
                 continue;
             }
 
@@ -148,7 +148,7 @@ impl PluginLoader {
                 Ok(v) => v,
                 Err(_) => {
                     warn!(
-                        "Plugin '{}': campo 'version' non è SemVer valido: '{}'",
+                        "Plugin '{}': 'version' field is not valid SemVer: '{}'",
                         folder_name, manifest.version
                     );
                     continue;
@@ -158,7 +158,7 @@ impl PluginLoader {
             // Validate entryPoint (no path traversal)
             if manifest.entry_point.contains("../") {
                 warn!(
-                    "Plugin '{}': campo 'entryPoint' contiene path traversal: '{}'",
+                    "Plugin '{}': 'entryPoint' field contains path traversal: '{}'",
                     folder_name, manifest.entry_point
                 );
                 continue;
@@ -166,11 +166,11 @@ impl PluginLoader {
 
             // Validate detect and render are non-empty
             if manifest.detect.is_empty() {
-                warn!("Plugin '{}': campo 'detect' è vuoto", folder_name);
+                warn!("Plugin '{}': 'detect' field is empty", folder_name);
                 continue;
             }
             if manifest.render.is_empty() {
-                warn!("Plugin '{}': campo 'render' è vuoto", folder_name);
+                warn!("Plugin '{}': 'render' field is empty", folder_name);
                 continue;
             }
 
@@ -178,7 +178,7 @@ impl PluginLoader {
             let entry_point_abs = path.join(&manifest.entry_point);
             if !entry_point_abs.exists() {
                 warn!(
-                    "Plugin '{}': entryPoint non trovato: {:?}",
+                    "Plugin '{}': entryPoint not found: {:?}",
                     folder_name, entry_point_abs
                 );
                 continue;
@@ -198,7 +198,7 @@ impl PluginLoader {
     }
 }
 
-/// Restituisce il path della Plugin_Directory predefinita: `~/.lunette/plugins/`
+/// Returns the path of the default Plugin_Directory: `~/.lunette/plugins/`
 pub fn default_plugin_dir() -> Option<PathBuf> {
     let home = std::env::var("HOME").ok().map(PathBuf::from).or({
         #[cfg(target_os = "windows")]

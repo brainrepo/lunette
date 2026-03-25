@@ -3,36 +3,36 @@ use serde::Serialize;
 #[derive(Debug, thiserror::Error, Serialize)]
 #[serde(tag = "kind", content = "detail")]
 pub enum LunetteError {
-    #[error("Input vuoto o solo whitespace")]
+    #[error("Empty input or whitespace only")]
     EmptyInput,
 
-    #[error("Nessun payload fornito: avviare Lunette tramite pipe o deep link")]
+    #[error("No payload provided: launch Lunette via pipe or deep link")]
     NoPayload,
 
-    #[error("Contenuto non interpretabile: il payload non è testo UTF-8 valido né un formato riconoscibile")]
+    #[error("Unrecognized content: payload is not valid UTF-8 text or a recognized format")]
     UnrecognizedContent,
 
-    #[error("Parametro URL mancante: né 'data' né 'file' presenti")]
+    #[error("Missing URL parameter: neither 'data' nor 'file' present")]
     MissingParam,
 
-    #[error("Decodifica Base64 fallita: {0}")]
+    #[error("Base64 decode failed: {0}")]
     Base64DecodeError(String),
 
-    #[error("Decompressione zlib fallita: {0}")]
+    #[error("Zlib decompression failed: {0}")]
     ZlibDecompressError(String),
 
-    #[error("File temporaneo non trovato o non leggibile: {path}")]
+    #[error("Temporary file not found or not readable: {path}")]
     TempFileNotFound { path: String },
 
-    #[error("Path file temporaneo non valido (deve iniziare con /tmp/lunette_): {path}")]
+    #[error("Invalid temporary file path (must start with <temp_dir>/lunette_): {path}")]
     InvalidTempFilePath { path: String },
 
-    #[error("IPC: impossibile contattare l'istanza esistente")]
+    #[error("IPC: unable to contact existing instance")]
     IpcConnectionFailed,
 
     #[error("Plugin '{name}': {message}")]
     PluginError { name: String, message: String },
 
-    #[error("Plugin '{name}': timeout dopo 10 secondi")]
+    #[error("Plugin '{name}': timed out after 10 seconds")]
     PluginTimeout { name: String },
 }

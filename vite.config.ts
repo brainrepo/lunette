@@ -11,6 +11,19 @@ export default defineConfig(async () => ({
       ignored: ["**/src-tauri/**"],
     },
   },
+  build: {
+    target: "es2020",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          mermaid: ["mermaid"],
+          excalidraw: ["@excalidraw/excalidraw"],
+          katex: ["katex"],
+          markdown: ["marked", "highlight.js"],
+        },
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     globals: true,

@@ -40,7 +40,7 @@ function ExcalidrawViewer({ content }: ExcalidrawViewerProps): React.JSX.Element
       setExported(true);
       setTimeout(() => setExported(false), 2000);
     } catch (err) {
-      console.error("Esportazione PNG fallita:", err);
+      console.error("PNG export failed:", err);
     } finally {
       setExporting(false);
     }
@@ -64,7 +64,7 @@ function ExcalidrawViewer({ content }: ExcalidrawViewerProps): React.JSX.Element
           </div>
           <div style={{ flex: 1 }} />
           <button style={{ ...toolbarButton, opacity: 0.4, cursor: "not-allowed" }} disabled>
-            Esporta PNG
+            Export PNG
           </button>
         </div>
         <div style={{ padding: "2rem", position: "relative", zIndex: 1 }}>
@@ -75,7 +75,7 @@ function ExcalidrawViewer({ content }: ExcalidrawViewerProps): React.JSX.Element
               color: PINK,
               margin: "0 0 8px 0",
             }}>
-              Errore Excalidraw
+              Excalidraw Error
             </p>
             <p style={{
               color: WHITE_60,
@@ -136,7 +136,7 @@ function ExcalidrawViewer({ content }: ExcalidrawViewerProps): React.JSX.Element
           onClick={handleExportPng}
           disabled={exporting}
         >
-          {exported ? "Esportato!" : exporting ? "Esportazione..." : "Esporta PNG"}
+          {exported ? "Exported!" : exporting ? "Exporting..." : "Export PNG"}
         </button>
       </div>
 

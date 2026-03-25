@@ -93,7 +93,7 @@ function PluginViewer({
               margin: "0 0 8px 0",
               fontFamily: FONT_SANS,
             }}>
-              Errore plugin
+              Plugin error
             </p>
             <p style={{
               marginTop: "0.5rem",
@@ -138,7 +138,7 @@ function PluginViewer({
               margin: "0 0 8px 0",
               fontFamily: FONT_SANS,
             }}>
-              Timeout plugin
+              Plugin timeout
             </p>
             <p style={{
               color: WHITE_35,
@@ -146,7 +146,7 @@ function PluginViewer({
               lineHeight: 1.6,
               margin: "8px 0 0 0",
             }}>
-              Il plugin non ha completato il rendering entro 10 secondi.
+              The plugin did not complete rendering within 10 seconds.
             </p>
           </div>
         </div>
@@ -181,7 +181,7 @@ function PluginViewer({
             color: WHITE_35,
             letterSpacing: "0.02em",
           }}>
-            Caricamento plugin {pluginId}...
+            Loading plugin {pluginId}...
           </div>
         )}
         <div id="plugin-container" ref={containerRef} />

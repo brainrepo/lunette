@@ -16,21 +16,21 @@ export function parseExcalidrawContent(content: string): ParsedData | ParseError
     parsed = JSON.parse(content);
   } catch (err) {
     return {
-      message: `JSON non valido: ${err instanceof Error ? err.message : String(err)}`,
+      message: `Invalid JSON: ${err instanceof Error ? err.message : String(err)}`,
     };
   }
 
   if (typeof parsed !== "object" || parsed === null) {
-    return { message: "Il contenuto non è un oggetto JSON valido." };
+    return { message: "Content is not a valid JSON object." };
   }
 
   const obj = parsed as Record<string, unknown>;
 
   if (!("elements" in obj)) {
-    return { message: "Campo mancante: 'elements'" };
+    return { message: "Missing field: 'elements'" };
   }
   if (!("appState" in obj)) {
-    return { message: "Campo mancante: 'appState'" };
+    return { message: "Missing field: 'appState'" };
   }
 
   return {

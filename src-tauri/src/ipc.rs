@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::LunetteError;
 
+/// Maximum IPC message size (50 MB).
+const MAX_IPC_MESSAGE_BYTES: u64 = 50 * 1024 * 1024;
+
 #[derive(Serialize, Deserialize)]
 pub struct IpcMessage {
     pub payload: String,
@@ -145,9 +148,9 @@ impl IpcServer {
 
         for stream in listener.incoming() {
             match stream {
-                Ok(mut s) => {
+                Ok(s) => {
                     let mut buf = String::new();
-                    if s.read_to_string(&mut buf).is_ok() {
+                    if s.take(MAX_IPC_MESSAGE_BYTES).read_to_string(&mut buf).is_ok() {
                         if let Ok(msg) = serde_json::from_str::<IpcMessage>(&buf) {
                             on_payload(msg.payload);
                         }
@@ -162,8 +165,6 @@ impl IpcServer {
 
     #[cfg(windows)]
     fn listen_windows(on_payload: impl Fn(String) + Send + 'static) {
-        use std::io::BufReader;
-
         loop {
             // Create a named pipe instance for each connection.
             let pipe = match named_pipe_server_create(PIPE_NAME) {
@@ -179,9 +180,8 @@ impl IpcServer {
                 continue;
             }
 
-            let mut reader = BufReader::new(&pipe);
             let mut buf = String::new();
-            if reader.read_to_string(&mut buf).is_ok() {
+            if (&pipe).take(MAX_IPC_MESSAGE_BYTES).read_to_string(&mut buf).is_ok() {
                 if let Ok(msg) = serde_json::from_str::<IpcMessage>(&buf) {
                     on_payload(msg.payload);
                 }
@@ -314,11 +314,11 @@ mod tests {
     use std::sync::{Arc, Mutex};
     use std::time::Duration;
 
-    /// Unit test: single-instance — seconda invocazione invia payload all'istanza esistente
+    /// Unit test: single-instance — second invocation sends payload to existing instance
     ///
-    /// Simula lo scenario in cui una seconda invocazione di Lunette trova l'istanza
-    /// già in esecuzione: serializza il payload e lo invia via IPC all'istanza esistente,
-    /// che lo riceve correttamente.
+    /// Simulates the scenario where a second invocation of Lunette finds an instance
+    /// already running: serializes the payload and sends it via IPC to the existing
+    /// instance, which receives it correctly.
     ///
     /// Validates: Requirements 7.1, 7.2, 7.3
     #[cfg(unix)]
@@ -394,9 +394,9 @@ mod tests {
         let _ = fs::remove_file(&socket_path);
     }
 
-    /// Verifica che IpcClient::send fallisca con IpcConnectionFailed quando nessuna
-    /// istanza è in ascolto sul socket — il chiamante deve avviare una nuova istanza
-    /// come fallback (Requirement 7.4).
+    /// Verifies that IpcClient::send fails with IpcConnectionFailed when no
+    /// instance is listening on the socket — the caller should start a new instance
+    /// as fallback (Requirement 7.4).
     #[cfg(unix)]
     #[test]
     fn test_ipc_client_fails_when_no_server_listening() {

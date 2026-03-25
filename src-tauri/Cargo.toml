@@ -30,5 +30,11 @@ semver = "1"
 proptest = "1"
 tempfile = "3"
 
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+opt-level = "s"
+
 [features]
 default = []
