@@ -79,10 +79,10 @@ function ViewerRouter(): React.JSX.Element {
 
   const renderViewer = (): React.ReactNode => {
     if (payload === null || payload.contentType === "error") {
-      const title = payload?.error?.title ?? "Come usare Lunette";
+      const title = payload?.error?.title ?? "How to use Lunette";
       const message =
         payload?.error?.message ??
-        "Avvia Lunette tramite pipe o deep link per visualizzare un contenuto.";
+        "Launch Lunette via pipe or deep link to display content.";
       return <ErrorViewer title={title} message={message} />;
     }
 
@@ -120,16 +120,17 @@ function ViewerRouter(): React.JSX.Element {
 
     return (
       <ErrorViewer
-        title="Formato non riconoscibile"
-        message="Il contenuto ricevuto non può essere visualizzato."
+        title="Unrecognized format"
+        message="The received content cannot be displayed."
       />
     );
   };
 
   return (
-    <React.Suspense fallback={<div style={loadingFallback}>caricamento...</div>}>
+    <React.Suspense fallback={<div style={loadingFallback}>loading...</div>}>
       {renderViewer()}
     </React.Suspense>
+
   );
 }
 

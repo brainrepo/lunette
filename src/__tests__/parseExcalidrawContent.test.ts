@@ -16,13 +16,13 @@ describe("parseExcalidrawContent()", () => {
   it("returns error for invalid JSON", () => {
     const result = parseExcalidrawContent("not json {{{");
     expect("message" in result).toBe(true);
-    expect((result as any).message).toContain("JSON non valido");
+    expect((result as any).message).toContain("Invalid JSON");
   });
 
   it("returns error when content is a JSON primitive", () => {
     const result = parseExcalidrawContent('"just a string"');
     expect("message" in result).toBe(true);
-    expect((result as any).message).toContain("non è un oggetto JSON valido");
+    expect((result as any).message).toContain("not a valid JSON object");
   });
 
   it("returns error for null JSON", () => {

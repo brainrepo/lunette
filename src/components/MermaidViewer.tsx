@@ -196,7 +196,7 @@ function MermaidViewer({ content }: MermaidViewerProps): React.JSX.Element {
           style={copied ? { ...toolbarButton, ...toolbarButtonActive } : toolbarButton}
           onClick={handleCopy}
         >
-          {copied ? "Copiato!" : "Copia sorgente"}
+          {copied ? "Copied!" : "Copy source"}
         </button>
       </div>
 
@@ -241,7 +241,7 @@ function MermaidViewer({ content }: MermaidViewerProps): React.JSX.Element {
                 color: PINK,
                 margin: "0 0 8px 0",
               }}>
-                Errore Mermaid
+                Mermaid Error
               </p>
               <p style={{
                 color: WHITE_60,

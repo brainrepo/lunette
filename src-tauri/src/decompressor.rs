@@ -31,12 +31,12 @@ pub fn compress_zlib(data: &[u8]) -> Result<Vec<u8>, LunetteError> {
 pub struct Decompressor;
 
 impl Decompressor {
-    /// Rileva se i dati sono compressi zlib ispezionando il magic byte (0x78).
+    /// Detects whether data is zlib-compressed by inspecting the magic byte (0x78).
     pub fn is_zlib(data: &[u8]) -> bool {
         !data.is_empty() && data[0] == 0x78
     }
 
-    /// Decomprime dati zlib/deflate (RFC 1950) e restituisce la stringa UTF-8.
+    /// Decompresses zlib/deflate data (RFC 1950) and returns the UTF-8 string.
     pub fn decompress(data: &[u8]) -> Result<String, LunetteError> {
         let mut decoder = ZlibDecoder::new(data);
         let mut out = Vec::new();
@@ -64,7 +64,7 @@ mod tests {
         }
     }
 
-    // Feature: lunette, Property 2: Base64 round-trip inverso (decode → encode)
+    // Feature: lunette, Property 2: Base64 inverse round-trip (decode → encode)
     // Validates: Requirements 8.3
     // Strategy: generate arbitrary byte sequences, encode them to valid Base64,
     // then verify that decode→encode produces the same canonical Base64 string.
@@ -80,7 +80,7 @@ mod tests {
         }
     }
 
-    // Feature: lunette, Property 3: zlib+Base64 round-trip completo
+    // Feature: lunette, Property 3: zlib+Base64 full round-trip
     // Validates: Requirements 9.3
     proptest! {
         #[test]

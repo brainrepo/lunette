@@ -10,7 +10,7 @@ interface ErrorViewerProps {
 }
 
 function ErrorViewer({ title, message }: ErrorViewerProps): React.JSX.Element {
-  const isUsage = title === "Come usare Lunette";
+  const isUsage = title === "How to use Lunette";
 
   return (
     <div style={styles.container}>

@@ -74,32 +74,27 @@ pub mod commands {
         registry: State<RegistryState>,
         pending: State<Arc<PendingPayload>>,
     ) {
-        // Mark frontend as ready
-        *pending.frontend_ready.lock().unwrap() = true;
+        // Mark frontend as ready (recover from poisoned mutex)
+        *pending.frontend_ready.lock().unwrap_or_else(|e| e.into_inner()) = true;
 
-        let content = pending.content.lock().unwrap().take();
+        let content = pending.content.lock().unwrap_or_else(|e| e.into_inner()).take();
         match content {
             Some(c) => {
-                let reg = registry.0.lock().unwrap();
+                let reg = registry.0.lock().unwrap_or_else(|e| e.into_inner());
                 run_pipeline(&app, c, &reg);
             }
             None => {
                 let _ = app.emit(
                     "lunette://error",
                     ErrorPayload {
-                        title: "Come usare Lunette".into(),
-                        message: "Avvia Lunette tramite pipe o deep link.".into(),
+                        title: "How to use Lunette".into(),
+                        message: "Launch Lunette via pipe or deep link.".into(),
                     },
                 );
             }
         }
     }
 
-    #[tauri::command]
-    pub fn copy_source(_content: String) -> Result<(), String> { Ok(()) }
-
-    #[tauri::command]
-    pub fn export_png(_data_url: String) -> Result<(), String> { Ok(()) }
 }
 
 fn content_type_to_dto(ct: &ContentType, registry: &PluginRegistry) -> Option<ContentTypeDto> {
@@ -133,8 +128,8 @@ pub fn run_pipeline(app: &AppHandle, content: String, registry: &PluginRegistry)
         }
         None => {
             let _ = app.emit("lunette://error", ErrorPayload {
-                title: "Formato non riconoscibile".into(),
-                message: "Il payload non e testo UTF-8 valido ne un formato riconoscibile.".into(),
+                title: "Unrecognized format".into(),
+                message: "The payload is not valid UTF-8 text or a recognized format.".into(),
             });
         }
     }
@@ -154,14 +149,14 @@ fn detect_payload_source() -> PayloadSource {
         match PipeHandler::read() {
             Ok(content) => return PayloadSource::Pipe(content),
             Err(LunetteError::EmptyInput) => return PayloadSource::Pipe(String::new()),
-            Err(e) => { eprintln!("Lunette: errore lettura stdin: {e}"); return PayloadSource::None; }
+            Err(e) => { eprintln!("Lunette: error reading stdin: {e}"); return PayloadSource::None; }
         }
     }
     for arg in std::env::args().skip(1) {
         if arg.starts_with("lunette://") {
             match DeepLinkHandler::parse(&arg) {
                 Ok(content) => return PayloadSource::DeepLink(content),
-                Err(e) => { eprintln!("Lunette: errore parsing deep link: {e}"); return PayloadSource::None; }
+                Err(e) => { eprintln!("Lunette: error parsing deep link: {e}"); return PayloadSource::None; }
             }
         }
     }
@@ -187,7 +182,7 @@ pub fn run() {
         Err(LunetteError::IpcConnectionFailed) => {
             if let Some(ref payload) = startup_payload {
                 if let Err(e) = IpcClient::send(payload) {
-                    eprintln!("Lunette: impossibile inviare payload: {e}");
+                    eprintln!("Lunette: unable to send payload: {e}");
                 } else {
                     std::process::exit(0);
                 }
@@ -195,7 +190,7 @@ pub fn run() {
                 std::process::exit(0);
             }
         }
-        Err(e) => { eprintln!("Lunette: errore IPC: {e}"); }
+        Err(e) => { eprintln!("Lunette: IPC error: {e}"); }
         Ok(()) => {}
     }
 
@@ -218,16 +213,14 @@ pub fn run() {
         .manage(RegistryState(registry_arc))
         .manage(pending)
         .invoke_handler(tauri::generate_handler![
-            commands::frontend_ready,
-            commands::copy_source,
-            commands::export_png
+            commands::frontend_ready
         ])
         .setup(move |app| {
             // IPC thread
             let app_handle = app.handle().clone();
             std::thread::spawn(move || {
                 while let Ok(payload) = ipc_rx.recv() {
-                    let reg = registry_for_ipc.lock().unwrap();
+                    let reg = registry_for_ipc.lock().unwrap_or_else(|e| e.into_inner());
                     run_pipeline(&app_handle, payload, &reg);
                     focus_window(&app_handle);
                 }
@@ -241,20 +234,20 @@ pub fn run() {
                 for url in event.urls() {
                     match DeepLinkHandler::parse(url.as_str()) {
                         Ok(content) => {
-                            let ready = *pending_dl.frontend_ready.lock().unwrap();
+                            let ready = *pending_dl.frontend_ready.lock().unwrap_or_else(|e| e.into_inner());
                             if ready {
                                 // Frontend is up — emit directly
-                                let reg = registry_for_dl.lock().unwrap();
+                                let reg = registry_for_dl.lock().unwrap_or_else(|e| e.into_inner());
                                 run_pipeline(&app_handle_dl, content, &reg);
                                 focus_window(&app_handle_dl);
                             } else {
                                 // Frontend not ready yet — store for frontend_ready to pick up
-                                *pending_dl.content.lock().unwrap() = Some(content);
+                                *pending_dl.content.lock().unwrap_or_else(|e| e.into_inner()) = Some(content);
                             }
                         }
                         Err(e) => {
                             let _ = app_handle_dl.emit("lunette://error", ErrorPayload {
-                                title: "Errore deep link".into(),
+                                title: "Deep link error".into(),
                                 message: e.to_string(),
                             });
                         }
@@ -265,5 +258,5 @@ pub fn run() {
             Ok(())
         })
         .run(tauri::generate_context!())
-        .expect("errore durante l avvio di Lunette");
+        .expect("error starting Lunette");
 }

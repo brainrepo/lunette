@@ -61,7 +61,7 @@ function MarkdownViewer({ content }: MarkdownViewerProps): React.JSX.Element {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Copia fallita:", err);
+      console.error("Copy failed:", err);
     }
   };
 
@@ -86,7 +86,7 @@ function MarkdownViewer({ content }: MarkdownViewerProps): React.JSX.Element {
           style={copied ? { ...toolbarButton, ...toolbarButtonActive } : toolbarButton}
           onClick={handleCopy}
         >
-          {copied ? "Copiato!" : "Copia sorgente"}
+          {copied ? "Copied!" : "Copy source"}
         </button>
       </div>
 

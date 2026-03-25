@@ -5,11 +5,11 @@ use crate::{decompressor::Decompressor, temp_file::TempFileHandler, LunetteError
 pub struct DeepLinkHandler;
 
 impl DeepLinkHandler {
-    /// Parsa un URL `lunette://` e restituisce il payload decodificato.
+    /// Parses a `lunette://` URL and returns the decoded payload.
     ///
-    /// - Se `file` presente → delega a `TempFileHandler`
-    /// - Se `data` presente → decodifica Base64, decomprime zlib se necessario
-    /// - Altrimenti → `MissingParam`
+    /// - If `file` is present → delegates to `TempFileHandler`
+    /// - If `data` is present → decodes Base64, decompresses zlib if needed
+    /// - Otherwise → `MissingParam`
     pub fn parse(url: &str) -> Result<String, LunetteError> {
         let query = Self::extract_query(url);
 
